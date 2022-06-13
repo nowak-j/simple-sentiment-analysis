@@ -1,6 +1,7 @@
 import ast
 import matplotlib.pyplot as plt
 from itertools import islice
+import numpy as np
 from pyrsistent import l
 import requests
 from bs4 import BeautifulSoup
@@ -8,12 +9,14 @@ import re
 import string
 from matplotlib.ticker import MaxNLocator
 
+figure_number = 0
+
+# TODO błąd usuwa punctuation niektóre dywizy
 
 def main():
 
     #parameters = get_run_parameters()
-    parameters = "{'compare': False, 'text_source': 'terminal', 'exclude_stopwords': True, 'filter_by_keywords': False, 'save_file': False}"
-    parameters = ast.literal_eval(parameters)
+    parameters = {'compare': False, 'text_source': 'text', 'exclude_stopwords': True, 'filter_by_keywords': False, 'save_file': False}
     negative_words, positive_words, stopwords = load_positive_negative_and_stopwords()
 
     # TODO obsługa compare, jeden plot, różnica w wynikach
@@ -23,19 +26,20 @@ def main():
     # else:
     #     text = get_text(parameters) 
 
-    text = 'He is a very good boy, I think.'
+    text = "The Jagiellon dynasty spanned the late Middle Ages and early Modern Era of Polish history. Beginning with the Lithuanian Grand Duke Jogaila (Władysław II Jagiełło), the Jagiellon evil bad shit wrong furious aggresive nice good strong weak dynasty (1386–1572) formed the Polish–Lithuanian union. The partnership brought vast Lithuania-controlled Rus' areas into Poland's sphere of influence and proved beneficial for the Poles and Lithuanians, who coexisted and cooperated in one of the largest political entities in Europe for the next four centuries. In the Baltic Sea region the struggle of Poland and Lithuania with the Teutonic Knights continued and culminated in the Battle of Grunwald (1410), where a combined Polish-Lithuanian army inflicted a decisive victory against the Teutonic Knights, allowing for territorial expansion of both nations into the far north region of Livonia. In 1466, after the Thirteen Years' War, King Casimir IV Jagiellon gave royal consent to the Peace of Thorn, which created the future Duchy of Prussia, a Polish vassal. The Jagiellon dynasty at one point also established dynastic control over the kingdoms of Bohemia (1471 onwards) and Hungary. In the south, Poland confronted the Ottoman Empire and the Crimean Tatars (by whom they were attacked on 75 separate occasions between 1474 and 1569),and in the east helped Lithuania fight the Grand Duchy of Moscow. Some historians estimate that Crimean Tatar slave-raiding cost Poland-Lithuania one million of its population between the years of 1494 and 1694."
     #text = get_text(parameters) 
     
-    if parameters["exclude_stopwords"] == True:
-        text = exclude_stopwords(stopwords, text) 
-
     if parameters["filter_by_keywords"] == True:
         text = filter_by_keywords(text)
 
     text = remove_punctuation(text)
+    text = text.lower()
+
+    if parameters["exclude_stopwords"] == True:
+        text = exclude_stopwords(stopwords, text) 
     
     analyse(text, positive_words, negative_words)
-
+    input("Insert any key to exit.")
     # TODO : save into file
     # TODO format JSON
 
@@ -63,6 +67,8 @@ def exclude_stopwords(stopwords, text):
     without_stopwords = []
     text = text.split()
     for word in text:
+        if word == "a":
+            None
         if word not in stopwords:
             without_stopwords.append(word)
     without_stopwords = ' '.join(without_stopwords)
@@ -102,7 +108,7 @@ def get_text(parameters):
         return input("Please enter your text: ")
 
 def get_text_from_file():
-    file = input("Enter file name with its extension within quotation marks: ")
+    file = input("Enter file name with its extension: ")
     input_file = open(file, 'r')
     text = input_file.read()
     input_file.close()
@@ -121,7 +127,7 @@ def get_true_or_false_input(message):
             print("The input is incorrect.")
 
 def get_text_from_url():
-    url = input("Input url within quotation marks: ")
+    url = input("Input url: ")
     page = requests.get(url)
     soup = BeautifulSoup(page.content, 'html.parser')
 
@@ -138,18 +144,17 @@ def get_text_from_url():
 
 def load_positive_negative_and_stopwords():
     positive_words_file = open('positive.txt', 'r')
-    positive_words = positive_words_file.read()
+    positive_words = positive_words_file.read().split("\n")
     positive_words_file.close()
     negative_words_file = open('negative.txt', 'r')
-    negative_words = negative_words_file.read()
+    negative_words = negative_words_file.read().split("\n")
     negative_words_file.close()
     stopwords_file = open('stopwords.txt', 'r')
-    stopwords = stopwords_file.read()
+    stopwords = stopwords_file.read().split("\n")
     stopwords_file.close()
     return negative_words, positive_words, stopwords
 
 def analyse(text, positive_words, negative_words):
-    "Function for text sentiment analysis"
     result = 0
     counter_positive = 0
     counter_negative = 0
@@ -175,8 +180,8 @@ def analyse(text, positive_words, negative_words):
             else:
                 negative_dict[word] += 1
             
-    positive_dict = dict(sorted(positive_dict.items(), key = lambda item: item[1]))
-    negative_dict = dict(sorted(negative_dict.items(), key = lambda item: item[1]))
+    positive_dict = dict(sorted(positive_dict.items(), key = lambda item: item[1], reverse=True))
+    negative_dict = dict(sorted(negative_dict.items(), key = lambda item: item[1], reverse=True))
 
     if result > 0:
         print("The opinion is positive.")
@@ -189,38 +194,44 @@ def analyse(text, positive_words, negative_words):
     print("The first ten most frequent negative words and the number of their occurrences: ", take(10, negative_dict.items()))
     print("The percentage of positive words is: ", counter_positive/number_of_words)
     print("The percentage of negative words is: ", counter_negative/number_of_words)   
-    positive_negative_words__number_plot(counter_positive, counter_negative)
+    positive_negative_words_number_plot(counter_positive, counter_negative)
     most_frequent_words_plot(positive_dict, "The most frequent positive words")
     most_frequent_words_plot(negative_dict, "The most frequent negative words")
     
-def positive_negative_words__number_plot(counter_positive, counter_negative): 
+def positive_negative_words_number_plot(counter_positive, counter_negative): 
     x = ['positive words', 'negative words']
     y = [counter_positive, counter_negative]
-
+    global figure_number
+    figure_number += 1
+    fig, ax = plt.subplots()
+    plt.figure(figure_number)
     plt.bar(x,y, color=('b','g'))
     plt.title('Number of positive and negative words', fontsize=16)
-    #plt.xticks(x, labels)
     plt.xlabel('Type of word')
     plt.ylabel('Occurrences')
-    plt.grid(True)
-    ax = plt.figure().gca()
+    ax = plt.gca()
     ax.yaxis.set_major_locator(MaxNLocator(integer=True))
-    plt.show()
+    plt.grid(True)
+    fig.tight_layout()
+    plt.show(block=False)
 
 def most_frequent_words_plot(words_count_dict, title):
     x = words_count_dict.keys()
     y = words_count_dict.values()
-
+    global figure_number 
+    figure_number += 1
+    fig, ax = plt.subplots()
+    plt.figure(figure_number)
     plt.bar(x, y)
     plt.title(title, fontsize=16)
     plt.xlabel('Words')
     plt.ylabel('Frequency')
-
     plt.grid(True)
-    # plt.minorticks_on()
-    # plt.xticks(rotation=90, fontsize=7)
-
-    plt.show()
+    plt.xticks(rotation=90, fontsize=8)
+    ax = plt.gca()
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+    fig.tight_layout()
+    plt.show(block=False)
 
 def take(n, iterable):
     "Return first n items of the iterable as a list"
