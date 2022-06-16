@@ -85,7 +85,6 @@ def exclude_stopwords(stopwords, text):
 
 def get_run_parameters():
     parameters = {}
-
     parameters["compare"] = get_true_or_false_input("Do you want to compare two texts?")
 
     while True:
@@ -203,7 +202,6 @@ def calculate_results(text, positive_words, negative_words):
     counter_positive, "number_of_negative_words": counter_negative, "positive_words_counts": positive_dict, "negative_words_counts": 
     negative_dict, "positive_words_percentage": positive_words_percentage, "negative_words_percentage": negative_words_percentage}
     return results
-    # zaokrąglić percentage?
 
 def visualise_results(results):
     if results["sentiment"] == "positive":
@@ -276,6 +274,7 @@ def visualise_comparative_results(results1, results2, comparative_results):
     print("The difference in sentiment is: ", comparative_results["sentiment_count_difference"])
     print(f"The difference in positive words percentage is: {comparative_results['positive_words_percentage_difference']:.2f}%")
     print(f"The difference in negative words percentage is: {comparative_results['negative_words_percentage_difference']:.2f}%")
+    
     fig, (ax1, ax2) = plt.subplots(2)
     fig.set_tight_layout(True)
     draw_positive_negative_words_counts_plot(ax1, results1["number_of_positive_words"], results1["number_of_negative_words"])

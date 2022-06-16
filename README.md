@@ -16,5 +16,7 @@ Positive and negative words and stopwords were taken from the web.
 Reposititories used:
 
 https://github.com/shekhargulati/sentiment-analysis-python/blob/master/opinion-lexicon-English/positive-words.txt
+
 https://github.com/shekhargulati/sentiment-analysis-python/blob/master/opinion-lexicon-English/negative-words.txt
+
 https://gist.github.com/sebleier/554280
